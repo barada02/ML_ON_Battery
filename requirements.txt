@@ -1,2 +1,10 @@
+python-dotenv
+jupyter
+ipykernel
 numpy
 scipy
+matplotlib
+pandas
+seaborn
+scikit-learn
+
