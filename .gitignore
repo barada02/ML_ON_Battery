@@ -1,0 +1,29 @@
+/battery_data_set
+/Battery_dataset/
+/Battery_DataSet/
+/Battery_Data_Set/
+
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*checkpoint.ipynb
+
+# IDE / Editor
+.vscode/
+
+# Testing/Type Hints
+.mypy_cache/
+.pytest_cache/
