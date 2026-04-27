@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Battery Health Monitor</title>
+    <link rel="stylesheet" href="/ui/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>🔋 NASA Battery ML Dashboard</h1>
+            <p>Real-time State of Health (SoH) & Remaining Useful Life (RUL) Inference</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <h2>Telemetry Input</h2>
+                <form id="telemetryForm">
+                    <div class="form-group">
+                        <label for="cycleIndex">Cycle Index</label>
+                        <input type="number" id="cycleIndex" name="cycleIndex" value="50" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="temperature">Ambient Temp (°C)</label>
+                        <input type="number" id="temperature" name="temperature" value="24" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="dischargeTime">Discharge Time (s)</label>
+                        <input type="number" id="dischargeTime" name="dischargeTime" value="3600" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxTempReached">Max Temp Reached (°C)</label>
+                        <input type="number" id="maxTempReached" name="maxTempReached" value="35" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="minVoltageRecorded">Min Voltage Recorded (V)</label>
+                        <input type="number" id="minVoltageRecorded" name="minVoltageRecorded" value="3.2" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="voltageDrop">Voltage Drop Rate (V/s)</label>
+                        <input type="number" id="voltageDrop" name="voltageDrop" value="0.005" step="0.0001">
+                    </div>
+                    <div class="form-group">
+                        <label for="resistance">Internal Resistance (Ohms)</label>
+                        <input type="number" id="resistance" name="resistance" value="0.02" step="0.001">
+                    </div>
+                    <button type="submit" id="analyzeBtn">Analyze Battery Health</button>
+                </form>
+                <div id="statusMessage"></div>
+            </section>
+
+            <section class="results-section">
+                <h2>Model Comparison</h2>
+                
+                <div class="cards-container">
+                    <!-- Random Forest -->
+                    <div class="model-card" id="card-rf">
+                        <div class="card-header">
+                            <h3>Random Forest</h3>
+                            <span class="badge">SoH Model</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric">
+                                <span>State of Health (SoH):</span>
+                                <strong id="rf-soh">--</strong>
+                            </div>
+                            <div class="metric">
+                                <span>RUL Estimate (CatBoost):</span>
+                                <strong id="rf-rul">--</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- XGBoost -->
+                    <div class="model-card" id="card-xgb">
+                        <div class="card-header">
+                            <h3>XGBoost</h3>
+                            <span class="badge">SoH Model</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric">
+                                <span>State of Health (SoH):</span>
+                                <strong id="xgb-soh">--</strong>
+                            </div>
+                            <div class="metric">
+                                <span>RUL Estimate (LSTM):</span>
+                                <strong id="xgb-rul">--</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LightGBM -->
+                    <div class="model-card" id="card-lgbm">
+                        <div class="card-header">
+                            <h3>LightGBM</h3>
+                            <span class="badge">SoH Model</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric">
+                                <span>State of Health (SoH):</span>
+                                <strong id="lgbm-soh">--</strong>
+                            </div>
+                            <div class="metric">
+                                <span>RUL Estimate (CatBoost):</span>
+                                <strong id="lgbm-rul">--</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="/ui/app.js"></script>
+</body>
+</html>

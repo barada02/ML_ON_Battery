@@ -11,6 +11,8 @@ import numpy as np
 import tensorflow as tf
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from catboost import CatBoostRegressor
 
@@ -25,6 +27,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount the UI directory for static files (CSS, JS)
+app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 
 # Request Schema
 class BatteryTelemetry(BaseModel):
@@ -71,7 +76,7 @@ print("--- All Models Loaded Successfully ---")
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "message": "Battery Health API is running"}
+    return FileResponse("ui/index.html")
 
 @app.post("/api/analyze")
 async def analyze_battery(data: BatteryTelemetry):
