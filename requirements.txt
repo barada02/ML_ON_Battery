@@ -7,4 +7,10 @@ matplotlib
 pandas
 seaborn
 scikit-learn
-
+fastapi
+uvicorn
+pydantic
+xgboost
+lightgbm
+catboost
+tensorflow
