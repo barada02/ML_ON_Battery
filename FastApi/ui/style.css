@@ -190,6 +190,8 @@ button:disabled {
 #card-rf .card-header h3 { color: var(--card-rf); }
 #card-xgb .card-header h3 { color: var(--card-xgb); }
 #card-lgbm .card-header h3 { color: var(--card-lgbm); }
+#card-catboost .card-header h3 { color: #38bdf8; }
+#card-lstm .card-header h3 { color: #fb7185; }
 
 .chart-container {
     background: var(--panel-bg);

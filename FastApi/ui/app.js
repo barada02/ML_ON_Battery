@@ -51,21 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateDashboard(results) {
-    // Update Cards
-    document.getElementById('rf-soh').innerText = `${results.rf.soh.toFixed(2)}%`;
-    document.getElementById('rf-rul').innerText = `${results.rf.rul} cycles`;
+    // Update SoH Cards
+    document.getElementById('rf-soh').innerText = `${results.soh.rf.toFixed(2)}%`;
+    document.getElementById('xgb-soh').innerText = `${results.soh.xgb.toFixed(2)}%`;
+    document.getElementById('lgbm-soh').innerText = `${results.soh.lgbm.toFixed(2)}%`;
 
-    document.getElementById('xgb-soh').innerText = `${results.xgb.soh.toFixed(2)}%`;
-    document.getElementById('xgb-rul').innerText = `${results.xgb.rul} cycles`;
-
-    document.getElementById('lgbm-soh').innerText = `${results.lgbm.soh.toFixed(2)}%`;
-    document.getElementById('lgbm-rul').innerText = `${results.lgbm.rul} cycles`;
+    // Update RUL Cards
+    document.getElementById('catboost-rul').innerText = `${results.rul.catboost} cycles`;
+    document.getElementById('lstm-rul').innerText = `${results.rul.lstm} cycles`;
 
     // Update Chart
     comparisonChart.data.datasets[0].data = [
-        results.rf.soh,
-        results.xgb.soh,
-        results.lgbm.soh
+        results.soh.rf,
+        results.soh.xgb,
+        results.soh.lgbm
     ];
     comparisonChart.update();
 }

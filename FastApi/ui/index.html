@@ -52,10 +52,8 @@
             </section>
 
             <section class="results-section">
-                <h2>Model Comparison</h2>
-                
+                <h2>State of Health (SoH) Models</h2>
                 <div class="cards-container">
-                    <!-- Random Forest -->
                     <div class="model-card" id="card-rf">
                         <div class="card-header">
                             <h3>Random Forest</h3>
@@ -63,17 +61,11 @@
                         </div>
                         <div class="card-body">
                             <div class="metric">
-                                <span>State of Health (SoH):</span>
+                                <span>Health Estimate:</span>
                                 <strong id="rf-soh">--</strong>
-                            </div>
-                            <div class="metric">
-                                <span>RUL Estimate (CatBoost):</span>
-                                <strong id="rf-rul">--</strong>
                             </div>
                         </div>
                     </div>
-
-                    <!-- XGBoost -->
                     <div class="model-card" id="card-xgb">
                         <div class="card-header">
                             <h3>XGBoost</h3>
@@ -81,17 +73,11 @@
                         </div>
                         <div class="card-body">
                             <div class="metric">
-                                <span>State of Health (SoH):</span>
+                                <span>Health Estimate:</span>
                                 <strong id="xgb-soh">--</strong>
-                            </div>
-                            <div class="metric">
-                                <span>RUL Estimate (LSTM):</span>
-                                <strong id="xgb-rul">--</strong>
                             </div>
                         </div>
                     </div>
-
-                    <!-- LightGBM -->
                     <div class="model-card" id="card-lgbm">
                         <div class="card-header">
                             <h3>LightGBM</h3>
@@ -99,12 +85,36 @@
                         </div>
                         <div class="card-body">
                             <div class="metric">
-                                <span>State of Health (SoH):</span>
+                                <span>Health Estimate:</span>
                                 <strong id="lgbm-soh">--</strong>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 1.5rem;">Remaining Useful Life (RUL) Models</h2>
+                <div class="cards-container" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="model-card" id="card-catboost">
+                        <div class="card-header">
+                            <h3>CatBoost</h3>
+                            <span class="badge" style="background:#0284c7;">RUL Model</span>
+                        </div>
+                        <div class="card-body">
                             <div class="metric">
-                                <span>RUL Estimate (CatBoost):</span>
-                                <strong id="lgbm-rul">--</strong>
+                                <span>Cycles Remaining:</span>
+                                <strong id="catboost-rul">--</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="model-card" id="card-lstm">
+                        <div class="card-header">
+                            <h3>LSTM Neural Net</h3>
+                            <span class="badge" style="background:#e11d48;">RUL Model</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric">
+                                <span>Cycles Remaining:</span>
+                                <strong id="lstm-rul">--</strong>
                             </div>
                         </div>
                     </div>

@@ -92,33 +92,37 @@ async def analyze_battery(data: BatteryTelemetry):
             'Internal_Resistance_Re': data.resistance
         }])
 
-        # Default fallback structure
         results = {
-            "rf": {"soh": 0, "rul": 0, "rul_model_name": "CatBoost"},
-            "xgb": {"soh": 0, "rul": 0, "rul_model_name": "LSTM Network"},
-            "lgbm": {"soh": 0, "rul": 0, "rul_model_name": "CatBoost"}
+            "soh": {
+                "rf": 0.0,
+                "xgb": 0.0,
+                "lgbm": 0.0
+            },
+            "rul": {
+                "catboost": 0,
+                "lstm": 0
+            }
         }
 
-        # Calculation 1: RF + CatBoost
-        if rf_soh and catboost_rul:
-            results["rf"]["soh"] = round(float(rf_soh.predict(input_features)[0]), 4)
-            results["rf"]["rul"] = int(catboost_rul.predict(input_features)[0])
+        # Calculate SoH (Multiply by 100 to convert to percentage if models output 0-1)
+        # Note: If your models output raw Capacity (e.g. 1.8 Ah), you might want to divide by nominal capacity (like 2.0 Ah) then multiply by 100.
+        # Assuming the model outputs fraction (0.0 to 1.0) based on your screenshot:
+        if rf_soh:
+            results["soh"]["rf"] = round(float(rf_soh.predict(input_features)[0]) * 100, 2)
+        if xgb_soh:
+            results["soh"]["xgb"] = round(float(xgb_soh.predict(input_features)[0]) * 100, 2)
+        if lgbm_soh:
+            results["soh"]["lgbm"] = round(float(lgbm_soh.predict(input_features)[0]) * 100, 2)
+
+        # Calculate RUL
+        if catboost_rul:
+            results["rul"]["catboost"] = int(catboost_rul.predict(input_features)[0])
         
-        # Calculation 2: XGB + LSTM
-        if xgb_soh and lstm_rul and lstm_scaler:
-            results["xgb"]["soh"] = round(float(xgb_soh.predict(input_features)[0]), 4)
-            
-            # LSTM Sequence simulation (1, 10, 7)
+        if lstm_rul and lstm_scaler:
             scaled_features = lstm_scaler.transform(input_features)
             sequence = np.tile(scaled_features, (1, 10, 1)) 
-            
             lstm_pred = lstm_rul.predict(sequence, verbose=0)
-            results["xgb"]["rul"] = int(float(lstm_pred[0][0]))
-
-        # Calculation 3: LGBM + CatBoost
-        if lgbm_soh and catboost_rul:
-            results["lgbm"]["soh"] = round(float(lgbm_soh.predict(input_features)[0]), 4)
-            results["lgbm"]["rul"] = int(catboost_rul.predict(input_features)[0])
+            results["rul"]["lstm"] = int(float(lstm_pred[0][0]))
 
         return results
 
