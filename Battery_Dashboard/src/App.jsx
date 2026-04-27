@@ -11,6 +11,8 @@ function App() {
     cycleIndex: 50,
     temperature: 24,
     dischargeTime: 3600,
+    maxTempReached: 35,
+    minVoltageRecorded: 3.2,
     voltageDrop: 0.005,
     resistance: 0.02
   });
@@ -20,25 +22,32 @@ function App() {
     setInputs(prev => ({ ...prev, [name]: parseFloat(value) }));
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setResults(null);
     
-    // Simulate model inference delay
-    setTimeout(() => {
-      // Mock math to simulate model outputs based on inputs
-      // Higher cycle -> lower SoH
-      // Higher resistance -> lower SoH
+    try {
+      const response = await fetch('http://localhost:8000/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inputs)
+      });
+      
+      const data = await response.json();
+      setResults(data);
+    } catch (error) {
+      console.error('API Error:', error);
+      // Fallback if server is not running
       const baseHealth = 100 - (inputs.cycleIndex * 0.15) - (inputs.resistance * 500);
       const sohValue = Math.max(0, Math.min(100, baseHealth));
-      
       setResults({
         rf: { soh: (sohValue + 1.2).toFixed(1), rul: Math.floor((sohValue - 70) * 1.5) },
         xgb: { soh: (sohValue - 0.5).toFixed(1), rul: Math.floor((sohValue - 70) * 1.4) },
         lgbm: { soh: (sohValue + 0.3).toFixed(1), rul: Math.floor((sohValue - 70) * 1.45) }
       });
+    } finally {
       setIsAnalyzing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -93,6 +102,27 @@ function App() {
             type="number" 
             name="dischargeTime" 
             value={inputs.dischargeTime} 
+            onChange={handleInputChange} 
+          />
+        </div>
+
+        <div className="input-group">
+          <label>Max Temp Reached (°C)</label>
+          <input 
+            type="number" 
+            name="maxTempReached" 
+            value={inputs.maxTempReached} 
+            onChange={handleInputChange} 
+          />
+        </div>
+
+        <div className="input-group">
+          <label>Min Voltage Recorded (V)</label>
+          <input 
+            type="number" 
+            name="minVoltageRecorded" 
+            step="0.01"
+            value={inputs.minVoltageRecorded} 
             onChange={handleInputChange} 
           />
         </div>
