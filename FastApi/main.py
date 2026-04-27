@@ -5,21 +5,19 @@ import joblib
 import pandas as pd
 import numpy as np
 import os
-# import tensorflow as tf # Uncomment when LSTM is ready
-# from catboost import CatBoostRegressor # Uncomment when CatBoost is ready
+import tensorflow as tf
+from catboost import CatBoostRegressor
 
 app = FastAPI(title="Battery Health ML API")
 
-# Enable CORS so the React app can talk to this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Define the expected incoming JSON format from React
 class BatteryTelemetry(BaseModel):
     cycleIndex: float
     temperature: float
@@ -29,31 +27,31 @@ class BatteryTelemetry(BaseModel):
     voltageDrop: float
     resistance: float
 
-# --- MODEL LOADING ---
-# For now, we will mock the model loads if the files don't exist yet,
-# to prevent the server from crashing before you've downloaded the files.
-
-def load_model_safely(path):
+def load_pkl(path):
     if os.path.exists(path):
         return joblib.load(path)
+    print(f"Warning: Model not found at {path}")
+    return None
+
+def load_keras(path):
+    if os.path.exists(path):
+        return tf.keras.models.load_model(path)
+    print(f"Warning: Model not found at {path}")
     return None
 
 # Load SoH Models (Track A)
-rf_soh = load_model_safely('saved_models/rf_soh_model.pkl')
-xgb_soh = load_model_safely('saved_models/xgb_soh_model.pkl')
-lgbm_soh = load_model_safely('saved_models/lgbm_soh_model.pkl')
+rf_soh = load_pkl(r'C:\Users\barad\Desktop\Kaggle\ML_ON_Battery\Model_Tr\saved_models\soh_models\rf_soh_model.pkl')
+xgb_soh = load_pkl(r'C:\Users\barad\Desktop\Kaggle\ML_ON_Battery\Model_Tr\saved_models\soh_models\xgb_soh_model.pkl')
+lgbm_soh = load_pkl(r'C:\Users\barad\Desktop\Kaggle\ML_ON_Battery\Model_Tr\saved_models\soh_models\lgbm_soh_model.pkl')
 
 # Load RUL Models (Track B)
-rf_rul = load_model_safely('saved_models/rf_rul_model.pkl')
-xgb_rul = load_model_safely('saved_models/xgb_rul_model.pkl')
-lgbm_rul = load_model_safely('saved_models/lgbm_rul_model.pkl')
-
-# TODO: Add LSTM and CatBoost loading here when you are ready!
+catboost_rul = load_pkl(r'C:\Users\barad\Desktop\Kaggle\ML_ON_Battery\Model_Tr\saved_models\Rul_Models\catboost_rul_model.pkl')
+lstm_rul = load_keras(r'C:\Users\barad\Desktop\Kaggle\ML_ON_Battery\Model_Tr\saved_models\Rul_Models\lstm_rul_model.keras')
+lstm_scaler = load_pkl(r'C:\Users\barad\Desktop\Kaggle\ML_ON_Battery\Model_Tr\saved_models\Rul_Models\lstm_scaler.pkl')
 
 @app.post("/api/analyze")
 async def analyze_battery(data: BatteryTelemetry):
     try:
-        # 1. Prepare the exact features the ML models expect in order
         input_features = pd.DataFrame([{
             'Cycle_Index': data.cycleIndex,
             'Ambient_Temperature': data.temperature,
@@ -64,43 +62,37 @@ async def analyze_battery(data: BatteryTelemetry):
             'Internal_Resistance_Re': data.resistance
         }])
 
+        # Default fallback values
         results = {
-            "rf": {"soh": 0, "rul": 0},
-            "xgb": {"soh": 0, "rul": 0},
-            "lgbm": {"soh": 0, "rul": 0}
+            "rf": {"soh": 0, "rul": 0, "rul_model_name": "CatBoost"},
+            "xgb": {"soh": 0, "rul": 0, "rul_model_name": "LSTM Network"},
+            "lgbm": {"soh": 0, "rul": 0, "rul_model_name": "CatBoost"}
         }
 
-        # 2. Run Random Forest Predictions
-        if rf_soh and rf_rul:
+        # Card 1: Random Forest SoH + CatBoost RUL
+        if rf_soh and catboost_rul:
             results["rf"]["soh"] = round(float(rf_soh.predict(input_features)[0]), 2)
-            results["rf"]["rul"] = int(rf_rul.predict(input_features)[0])
+            results["rf"]["rul"] = int(catboost_rul.predict(input_features)[0])
         
-        # 3. Run XGBoost Predictions
-        if xgb_soh and xgb_rul:
+        # Card 2: XGBoost SoH + LSTM RUL
+        if xgb_soh and lstm_rul and lstm_scaler:
             results["xgb"]["soh"] = round(float(xgb_soh.predict(input_features)[0]), 2)
-            results["xgb"]["rul"] = int(xgb_rul.predict(input_features)[0])
+            
+            # LSTM needs scaled data and sequence length of 10.
+            # We replicate this single reading 10 times to simulate the required sequence.
+            scaled_features = lstm_scaler.transform(input_features)
+            sequence = np.tile(scaled_features, (10, 1)) # Shape (10, 7)
+            sequence = np.expand_dims(sequence, axis=0)  # Shape (1, 10, 7)
+            
+            lstm_pred = lstm_rul.predict(sequence, verbose=0)
+            results["xgb"]["rul"] = int(float(lstm_pred[0][0]))
 
-        # 4. Run LightGBM Predictions
-        if lgbm_soh and lgbm_rul:
+        # Card 3: LightGBM SoH + CatBoost RUL (Re-using CatBoost for the 3rd card since we only have 2 RUL models)
+        if lgbm_soh and catboost_rul:
             results["lgbm"]["soh"] = round(float(lgbm_soh.predict(input_features)[0]), 2)
-            results["lgbm"]["rul"] = int(lgbm_rul.predict(input_features)[0])
-
-        # If models aren't found, return mock data just so the UI doesn't break
-        if not rf_soh:
-            base = 100 - (data.cycleIndex * 0.15) - (data.resistance * 500)
-            soh = max(0, min(100, base))
-            results = {
-                "rf": {"soh": round(soh + 1.2, 1), "rul": int((soh - 70) * 1.5)},
-                "xgb": {"soh": round(soh - 0.5, 1), "rul": int((soh - 70) * 1.4)},
-                "lgbm": {"soh": round(soh + 0.3, 1), "rul": int((soh - 70) * 1.45)}
-            }
-            results["warning"] = "Models not found! Displaying mathematical simulation."
+            results["lgbm"]["rul"] = int(catboost_rul.predict(input_features)[0])
 
         return results
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/health")
-async def health_check():
-    return {"status": "ok", "message": "NASA Battery ML Server is running"}

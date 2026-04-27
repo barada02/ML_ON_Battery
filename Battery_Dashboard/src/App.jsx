@@ -208,7 +208,7 @@ function App() {
 
               <div className="rul-highlight">
                 <div className="rul-value">{Math.max(0, results.rf.rul)}</div>
-                <div className="rul-label">Cycles Remaining</div>
+                <div className="rul-label">{results.rf.rul_model_name || "Cycles Remaining"} Prediction</div>
               </div>
             </div>
 
@@ -235,7 +235,7 @@ function App() {
 
               <div className="rul-highlight">
                 <div className="rul-value">{Math.max(0, results.xgb.rul)}</div>
-                <div className="rul-label">Cycles Remaining</div>
+                <div className="rul-label">{results.xgb.rul_model_name || "Cycles Remaining"} Prediction</div>
               </div>
             </div>
 
@@ -262,7 +262,7 @@ function App() {
 
               <div className="rul-highlight">
                 <div className="rul-value">{Math.max(0, results.lgbm.rul)}</div>
-                <div className="rul-label">Cycles Remaining</div>
+                <div className="rul-label">{results.lgbm.rul_model_name || "Cycles Remaining"} Prediction</div>
               </div>
             </div>
 
